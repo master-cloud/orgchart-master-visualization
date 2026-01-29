@@ -1,6 +1,6 @@
 {
   "name": "Mavericks Org Chart",
-  "description": "Organigramă dinamică",
+  "description": "Organigramă dinamică din Google Sheets",
   "organization": "Mavericks",
   "version": "1.0",
   "components": [
@@ -13,9 +13,10 @@
       },
       "data": {
         "dimensions": [
-          { "id": "employee", "name": "Employee" },
-          { "id": "manager", "name": "Reports To" },
-          { "id": "role", "name": "Role" }
+          { "id": "employee", "name": "Nume intern" },
+          { "id": "manager", "name": "Reports to" },
+          { "id": "role", "name": "Rol" },
+          { "id": "department", "name": "Departament" }
         ]
       }
     }
