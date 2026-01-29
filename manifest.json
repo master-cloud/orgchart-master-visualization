@@ -1,117 +1,23 @@
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8">
-  <title>Organigramă</title>
-
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
+{
+  "name": "Mavericks Org Chart",
+  "description": "Organigramă dinamică",
+  "organization": "Mavericks",
+  "version": "1.0",
+  "components": [
+    {
+      "id": "orgchart",
+      "name": "Org Chart",
+      "resource": {
+        "js": "orgchart.js",
+        "html": "index.html"
+      },
+      "data": {
+        "dimensions": [
+          { "id": "employee", "name": "Employee" },
+          { "id": "manager", "name": "Reports To" },
+          { "id": "role", "name": "Role" }
+        ]
+      }
     }
-
-    #orgchart {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .node {
-      padding: 10px;
-      border-radius: 12px;
-      background: #0f6c7a;
-      color: white;
-      text-align: center;
-      min-width: 160px;
-    }
-
-    .node .name {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .node .role {
-      font-size: 12px;
-      opacity: 0.9;
-      margin-top: 4px;
-    }
-
-    .node .dept {
-      font-size: 11px;
-      margin-top: 6px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 8px;
-      padding: 2px 6px;
-      display: inline-block;
-    }
-  </style>
-</head>
-
-<body>
-
-<h2 style="text-align:center;">Organigramă</h2>
-<div id="orgchart"></div>
-
-<script>
-google.charts.load('current', { packages: ["orgchart"] });
-google.charts.setOnLoadCallback(loadData);
-
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT2odMcWmB4-T7bDO7JcLbK9YfvmwT08uD8I8n-8Te1-tXP8jlEPW7gvIo1YTmtaH0Y40OKNE8UUSHc/pub?gid=105198555&single=true&output=csv";
-
-function loadData() {
-  fetch(CSV_URL)
-    .then(res => res.text())
-    .then(text => drawChart(parseCSV(text)));
+  ]
 }
-
-function parseCSV(text) {
-  const rows = text.split("\n").map(r => r.split(","));
-  const headers = rows.shift();
-
-  return rows.map(r => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h.trim()] = (r[i] || "").trim());
-    return obj;
-  });
-}
-
-function drawChart(data) {
-  const chartData = new google.visualization.DataTable();
-  chartData.addColumn('string', 'Name');
-  chartData.addColumn('string', 'Manager');
-  chartData.addColumn('string', 'ToolTip');
-
-  data.forEach(row => {
-    const name = row["Nume intern"];
-    const manager = row["Reports to"] || null;
-
-    const html = `
-      <div class="node">
-        <div class="name">${name}</div>
-        <div class="role">${row["Rol"]}</div>
-        <div class="dept">${row["Departament"]}</div>
-      </div>
-    `;
-
-    chartData.addRow([
-      { v: name, f: html },
-      manager,
-      row["Rol"]
-    ]);
-  });
-
-  const chart = new google.visualization.OrgChart(
-    document.getElementById('orgchart')
-  );
-
-  chart.draw(chartData, {
-    allowHtml: true,
-    size: 'medium'
-  });
-}
-</script>
-
-</body>
-</html>
