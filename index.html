@@ -1,20 +1,29 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Organigramă</title>
 
+  <!-- Google Charts -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
     }
+
+    h2 {
+      text-align: center;
+    }
+
     #orgchart {
       width: 100%;
       overflow-x: auto;
     }
+
     .node {
       padding: 10px;
       border-radius: 12px;
@@ -23,9 +32,19 @@
       text-align: center;
       min-width: 160px;
     }
-    .name { font-weight: bold; }
-    .role { font-size: 12px; margin-top: 4px; }
-    .dept {
+
+    .node .name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .node .role {
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.9;
+    }
+
+    .node .dept {
       font-size: 11px;
       margin-top: 6px;
       background: rgba(255,255,255,0.15);
@@ -37,53 +56,37 @@
 </head>
 
 <body>
-  <h2 style="text-align:center;">Organigramă</h2>
+  <h2>Organigramă</h2>
   <div id="orgchart"></div>
 
-<script>
-google.charts.load('current', { packages: ['orgchart'] });
-google.charts.setOnLoadCallback(drawChart);
+  <script>
+    google.charts.load('current', { packages: ['orgchart'] });
+    google.charts.setOnLoadCallback(drawChart);
 
-const CSV_URL =
-'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2odMcWmB4-T7bDO7JcLbK9YfvmwT08uD8I8n-8Te1-tXP8jlEPW7gvIo1YTmtaH0Y40OKNE8UUSHc/pub?gid=105198555&single=true&output=csv';
-
-function drawChart() {
-  fetch(CSV_URL)
-    .then(r => r.text())
-    .then(csv => {
-      const rows = csv.split('\n').map(r => r.split(','));
-      const headers = rows.shift();
-
-      const data = new google.visualization.DataTable();
-      data.addColumn('string', 'Name');
-      data.addColumn('string', 'Manager');
-      data.addColumn('string', 'Tooltip');
-
-      rows.forEach(r => {
-        const row = {};
-        headers.forEach((h, i) => row[h.trim()] = (r[i] || '').trim());
-
-        const html = `
-          <div class="node">
-            <div class="name">${row['Nume intern']}</div>
-            <div class="role">${row['Rol']}</div>
-            <div class="dept">${row['Departament']}</div>
-          </div>
-        `;
-
-        data.addRow([
-          { v: row['Nume intern'], f: html },
-          row['Reports to'] || null,
-          row['Rol']
-        ]);
-      });
-
-      const chart = new google.visualization.OrgChart(
-        document.getElementById('orgchart')
+    function drawChart() {
+      const query = new google.visualization.Query(
+        'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2odMcWmB4-T7bDO7JcLbK9YfvmwT08uD8I8n-8Te1-tXP8jlEPW7gvIo1YTmtaH0Y40OKNE8UUSHc/pubhtml?gid=105198555&single=true'
       );
-      chart.draw(data, { allowHtml: true });
-    });
-}
-</script>
+
+      query.send(response => {
+        if (response.isError()) {
+          document.getElementById('orgchart').innerHTML =
+            'Eroare: ' + response.getMessage();
+          return;
+        }
+
+        const data = response.getDataTable();
+
+        const chart = new google.visualization.OrgChart(
+          document.getElementById('orgchart')
+        );
+
+        chart.draw(data, {
+          allowHtml: true,
+          size: 'medium'
+        });
+      });
+    }
+  </script>
 </body>
 </html>
