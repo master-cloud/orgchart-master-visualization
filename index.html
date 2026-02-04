@@ -1,110 +1,118 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Organigramă</title>
 
+  <!-- Google Charts -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f7fa;
+      margin: 0;
       padding: 20px;
     }
 
-    h2 {
+    h1 {
       text-align: center;
+    }
+
+    #orgchart {
+      width: 100%;
+      overflow-x: auto;
     }
 
     .node {
       padding: 10px;
-      border-radius: 12px;
+      border-radius: 10px;
       background: #0f6c7a;
-      color: white;
+      color: #fff;
       text-align: center;
       min-width: 160px;
     }
 
-    .name {
+    .node .name {
       font-weight: bold;
       font-size: 14px;
     }
 
-    .role {
+    .node .role {
       font-size: 12px;
       margin-top: 4px;
+      opacity: 0.9;
     }
 
-    .dept {
+    .node .dept {
       font-size: 11px;
       margin-top: 6px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
       padding: 2px 6px;
       display: inline-block;
     }
   </style>
 </head>
-
 <body>
-<h2>Organigramă</h2>
+
+<h1>Organigramă</h1>
 <div id="orgchart"></div>
 
 <script>
-  google.charts.load('current', { packages: ['orgchart'] });
-  google.charts.setOnLoadCallback(drawChart);
+  google.charts.load("current", { packages: ["orgchart"] });
+  google.charts.setOnLoadCallback(loadData);
 
-  function drawChart() {
-    const query = new google.visualization.Query(
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2odMcWmB4-T7bDO7JcLbK9YfvmwT08uD8I8n-8Te1-tXP8jlEPW7gvIo1YTmtaH0Y40OKNE8UUSHc/gviz/tq?gid=105198555'
-    );
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
 
-    query.send(handleResponse);
+  function loadData() {
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(text => drawChart(parseCSV(text)))
+      .catch(err => console.error("CSV load error:", err));
   }
 
-  function handleResponse(response) {
-    if (response.isError()) {
-      console.error(response.getMessage(), response.getDetailedMessage());
-      return;
-    }
+  function parseCSV(text) {
+    const lines = text.trim().split("\n");
+    const headers = lines.shift().split(",").map(h => h.trim());
 
-    const sheetData = response.getDataTable();
+    return lines.map(line => {
+      const cols = line.split(",");
+      const obj = {};
+      headers.forEach((h, i) => (obj[h] = (cols[i] || "").trim()));
+      return obj;
+    });
+  }
 
-    const table = new google.visualization.DataTable();
-    table.addColumn('string', 'Name');
-    table.addColumn('string', 'Manager');
-    table.addColumn('string', 'Tooltip');
+  function drawChart(rows) {
+    const data = new google.visualization.DataTable();
+    data.addColumn("string", "Name");
+    data.addColumn("string", "Manager");
+    data.addColumn("string", "ToolTip");
 
-    for (let i = 0; i < sheetData.getNumberOfRows(); i++) {
-      const name = sheetData.getValue(i, sheetData.getColumnIndex('Nume intern'));
-      const manager = sheetData.getValue(i, sheetData.getColumnIndex('Reports to'));
-      const role = sheetData.getValue(i, sheetData.getColumnIndex('Rol'));
-      const dept = sheetData.getValue(i, sheetData.getColumnIndex('Departament'));
+    rows.forEach(r => {
+      const name = r["Nume intern"];
+      const manager = r["Reports to"] || "";
 
-      if (!name) continue;
+      const html = `
+        <div class="node">
+          <div class="name">${name}</div>
+          <div class="role">${r["Rol"] || ""}</div>
+          <div class="dept">${r["Departament"] || ""}</div>
+        </div>
+      `;
 
-      table.addRow([
-        {
-          v: name,
-          f: `
-            <div class="node">
-              <div class="name">${name}</div>
-              <div class="role">${role || ''}</div>
-              <div class="dept">${dept || ''}</div>
-            </div>
-          `
-        },
-        manager || null,
-        role || ''
-      ]);
-    }
+      data.addRow([{ v: name, f: html }, manager, r["Rol"] || ""]);
+    });
 
     const chart = new google.visualization.OrgChart(
-      document.getElementById('orgchart')
+      document.getElementById("orgchart")
     );
-    chart.draw(table, { allowHtml: true });
+
+    chart.draw(data, { allowHtml: true });
   }
 </script>
+
 </body>
 </html>
