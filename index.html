@@ -4,18 +4,15 @@
   <meta charset="UTF-8" />
   <title>Organigramă</title>
 
-  <!-- Google Charts -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f7fa;
-      margin: 0;
-      padding: 20px;
     }
 
-    h1 {
+    h2 {
       text-align: center;
     }
 
@@ -26,93 +23,94 @@
 
     .node {
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #0f6c7a;
-      color: #fff;
+      color: white;
       text-align: center;
       min-width: 160px;
     }
 
-    .node .name {
+    .name {
       font-weight: bold;
       font-size: 14px;
     }
 
-    .node .role {
+    .role {
       font-size: 12px;
       margin-top: 4px;
-      opacity: 0.9;
     }
 
-    .node .dept {
+    .dept {
       font-size: 11px;
       margin-top: 6px;
       background: rgba(255,255,255,0.15);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 2px 6px;
       display: inline-block;
     }
   </style>
 </head>
+
 <body>
+  <h2>Organigramă</h2>
+  <div id="orgchart"></div>
 
-<h1>Organigramă</h1>
-<div id="orgchart"></div>
+  <script>
+    const CSV_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
 
-<script>
-  google.charts.load("current", { packages: ["orgchart"] });
-  google.charts.setOnLoadCallback(loadData);
+    google.charts.load("current", { packages: ["orgchart"] });
+    google.charts.setOnLoadCallback(loadData);
 
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
+    function loadData() {
+      fetch(CSV_URL)
+        .then(r => r.text())
+        .then(parseCSV)
+        .then(drawChart)
+        .catch(err => console.error("CSV load error:", err));
+    }
 
-  function loadData() {
-    fetch(CSV_URL)
-      .then(r => r.text())
-      .then(text => drawChart(parseCSV(text)))
-      .catch(err => console.error("CSV load error:", err));
-  }
+    function parseCSV(text) {
+      const lines = text.trim().split("\n");
+      const headers = lines.shift().split(",");
 
-  function parseCSV(text) {
-    const lines = text.trim().split("\n");
-    const headers = lines.shift().split(",").map(h => h.trim());
+      return lines.map(line => {
+        const cols = line.split(",");
+        let obj = {};
+        headers.forEach((h, i) => {
+          obj[h.trim()] = (cols[i] || "").trim();
+        });
+        return obj;
+      });
+    }
 
-    return lines.map(line => {
-      const cols = line.split(",");
-      const obj = {};
-      headers.forEach((h, i) => (obj[h] = (cols[i] || "").trim()));
-      return obj;
-    });
-  }
+    function drawChart(rows) {
+      const data = new google.visualization.DataTable();
+      data.addColumn("string", "Name");
+      data.addColumn("string", "Manager");
+      data.addColumn("string", "ToolTip");
 
-  function drawChart(rows) {
-    const data = new google.visualization.DataTable();
-    data.addColumn("string", "Name");
-    data.addColumn("string", "Manager");
-    data.addColumn("string", "ToolTip");
+      rows.forEach(r => {
+        const name = r["Nume intern"];
+        const manager = r["Reports to"] || null;
 
-    rows.forEach(r => {
-      const name = r["Nume intern"];
-      const manager = r["Reports to"] || "";
+        const html = `
+          <div class="node">
+            <div class="name">${name}</div>
+            <div class="role">${r["Rol"]}</div>
+            <div class="dept">${r["Departament"]}</div>
+          </div>
+        `;
 
-      const html = `
-        <div class="node">
-          <div class="name">${name}</div>
-          <div class="role">${r["Rol"] || ""}</div>
-          <div class="dept">${r["Departament"] || ""}</div>
-        </div>
-      `;
+        data.addRow([{ v: name, f: html }, manager, r["Rol"]]);
+      });
 
-      data.addRow([{ v: name, f: html }, manager, r["Rol"] || ""]);
-    });
+      const chart = new google.visualization.OrgChart(
+        document.getElementById("orgchart")
+      );
 
-    const chart = new google.visualization.OrgChart(
-      document.getElementById("orgchart")
-    );
-
-    chart.draw(data, { allowHtml: true });
-  }
-</script>
-
+      chart.draw(data, { allowHtml: true });
+    }
+  </script>
 </body>
 </html>
