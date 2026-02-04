@@ -4,16 +4,20 @@
   <meta charset="UTF-8" />
   <title>Organigramă</title>
 
+  <!-- Google Charts -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f7fa;
+      margin: 0;
+      padding: 24px;
     }
 
-    h2 {
+    h1 {
       text-align: center;
+      margin-bottom: 30px;
     }
 
     #orgchart {
@@ -22,12 +26,12 @@
     }
 
     .node {
-      padding: 10px;
-      border-radius: 10px;
-      color: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: #fff;
       text-align: center;
-      min-width: 160px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      min-width: 170px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
     .name {
@@ -44,63 +48,71 @@
     .dept {
       font-size: 11px;
       margin-top: 6px;
-      padding: 2px 6px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 8px;
       display: inline-block;
     }
   </style>
 </head>
-
 <body>
-  <h2>Organigramă</h2>
+
+  <h1>Organigramă</h1>
   <div id="orgchart"></div>
 
   <script>
     google.charts.load('current', { packages: ['orgchart'] });
     google.charts.setOnLoadCallback(loadData);
 
+    // 🔗 CSV PUBLICAT (exact linkul tău)
     const CSV_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
 
+    // 🎨 CULORI PE DEPARTAMENT
     const DEPT_COLORS = {
       "Growth": "#2E8B57",
       "Performance": "#0F6C7A",
+      "Performance (Data)": "#8A2BE2",
       "Support": "#6A5ACD",
       "Communication": "#C46A00"
     };
 
     function loadData() {
       fetch(CSV_URL)
-        .then(res => res.text())
-        .then(text => drawChart(parseCSV(text)));
+        .then(r => r.text())
+        .then(parseCSV)
+        .then(drawChart)
+        .catch(err => {
+          console.error("Eroare la încărcarea CSV:", err);
+        });
     }
 
     function parseCSV(text) {
-      const rows = text.trim().split("\n").map(r => r.split(","));
-      const headers = rows.shift();
+      const rows = text.trim().split("\n").map(r =>
+        r.split(",").map(c => c.replace(/^"|"$/g, "").trim())
+      );
 
-      return rows.map(r => {
+      const headers = rows[0];
+      return rows.slice(1).map(row => {
         const obj = {};
-        headers.forEach((h, i) => {
-          obj[h.trim()] = (r[i] || "").trim();
-        });
+        headers.forEach((h, i) => obj[h] = row[i] || "");
         return obj;
       });
     }
 
-    function drawChart(data) {
-      const chartData = new google.visualization.DataTable();
-      chartData.addColumn('string', 'Name');
-      chartData.addColumn('string', 'Manager');
-      chartData.addColumn('string', 'ToolTip');
+    function drawChart(dataRows) {
+      const data = new google.visualization.DataTable();
+      data.addColumn('string', 'Name');
+      data.addColumn('string', 'Manager');
+      data.addColumn('string', 'Tooltip');
 
-      data.forEach(row => {
+      dataRows.forEach(row => {
         const name = row["Nume intern"];
-        const manager = row["Reports to"] || null;
+        const manager = row["Reports to"] || "";
         const role = row["Rol"];
         const dept = row["Departament"];
-        const color = DEPT_COLORS[dept] || "#555";
+
+        const color = DEPT_COLORS[dept] || "#607D8B";
 
         const html = `
           <div class="node" style="background:${color}">
@@ -110,10 +122,10 @@
           </div>
         `;
 
-        chartData.addRow([
+        data.addRow([
           { v: name, f: html },
           manager,
-          role
+          `${name} – ${role}`
         ]);
       });
 
@@ -121,11 +133,13 @@
         document.getElementById('orgchart')
       );
 
-      chart.draw(chartData, {
+      chart.draw(data, {
         allowHtml: true,
-        size: 'medium'
+        allowCollapse: true,
+        size: 'large'
       });
     }
   </script>
+
 </body>
 </html>
