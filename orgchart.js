@@ -1,5 +1,3 @@
-// Codul complet pentru orgchart.js
-
 google.charts.load('current', { packages: ['orgchart'] });
 google.charts.setOnLoadCallback(loadData);
 
@@ -77,7 +75,7 @@ function drawChart(dataRows) {
     size: 'large'
   });
 
-  // Afișarea modalului atunci când se face click pe un nume
+  // Adăugăm listenerul de click
   google.visualization.events.addListener(chart, 'select', function() {
     const selectedItem = chart.getSelection()[0];
     if (!selectedItem) return;
