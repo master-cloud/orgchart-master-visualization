@@ -37,28 +37,24 @@
     // Preia parametrii din URL
     const params = new URLSearchParams(window.location.search);
     const name = params.get("name");
-    const role = params.get("role");
-    const dept = params.get("dept");
 
-    // Afișează numele angajatului pe pagina
+    // Afișează numele persoanei
     document.getElementById('name').textContent = name;
 
-    // URL-ul CSV-ului pentru a prelua responsabilitățile
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
-
+    // Preia datele din Google Sheets
     function getData() {
-      fetch(CSV_URL)
+      const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmxAF6tY8qazYHtrd1Qxfe2sM4SRDlbbYgFdB5n4tf03rDXi69uif_BK4QyP7_91lnMOJVeQuKFPkS/pub?output=csv";
+      fetch(sheetUrl)
         .then(response => response.text())
         .then(parseCSV)
         .then(displayTasks)
-        .catch(error => console.error('Eroare la încărcarea CSV:', error));
+        .catch(error => console.error('Error loading data:', error));
     }
 
     function parseCSV(text) {
       const rows = text.trim().split("\n").map(r =>
         r.split(",").map(c => c.replace(/^"|"$/g, "").trim())
       );
-
       const headers = rows[0];
       return rows.slice(1).map(row => {
         const obj = {};
