@@ -4,61 +4,26 @@
   <meta charset="UTF-8" />
   <title>Organigramă</title>
 
+  <!-- Link către fișierul CSS extern -->
+  <link rel="stylesheet" href="styles.css">
+
   <!-- Google Charts -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      margin: 0;
-      padding: 24px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    #orgchart {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .node {
-      padding: 10px 14px;
-      border-radius: 12px;
-      color: #fff;
-      text-align: center;
-      min-width: 170px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    }
-
-    .name {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .role {
-      font-size: 12px;
-      margin-top: 4px;
-      opacity: 0.95;
-    }
-
-    .dept {
-      font-size: 11px;
-      margin-top: 6px;
-      background: rgba(255,255,255,0.2);
-      padding: 2px 8px;
-      border-radius: 8px;
-      display: inline-block;
-    }
-  </style>
 </head>
 <body>
 
   <h1>Organigramă</h1>
   <div id="orgchart"></div>
+
+  <!-- Modal pentru responsabilități -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="close" class="close">&times;</span>
+      <h2 id="modal-name"></h2>
+      <p id="modal-role"></p>
+      <div id="modal-tasks"></div>
+    </div>
+  </div>
 
   <script>
     google.charts.load('current', { packages: ['orgchart'] });
@@ -138,8 +103,10 @@
         allowCollapse: true,
         size: 'large'
       });
-    }
-  </script>
 
-</body>
-</html>
+      // Afișarea modalului atunci când se face click pe un nume
+      google.visualization.events.addListener(chart, 'select', function() {
+        const selectedItem = chart.getSelection()[0];
+        const name = data.getValue(selectedItem.row, 0);  // Obține numele din linia selectată
+        const role = data.getValue(selectedItem.row, 1);  // Obține rolul
+        const dept = data.getV
